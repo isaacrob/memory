@@ -51,16 +51,19 @@ def main(stdscr):
 
     curses.mousemask(curses.BUTTON1_CLICKED)
 
+    # initialize color profiles
     curses.init_pair(RED_PAIR, curses.COLOR_RED, curses.COLOR_WHITE)
     curses.init_pair(BLACK_PAIR, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(BACK_PAIR, curses.COLOR_YELLOW, curses.COLOR_BLUE)
 
+    # make initial screen
     locations = get_card_locations()
     possible_clicks = set(locations)
     show_backs_of_cards(stdscr, locations)
 
     # stdscr.refresh()
 
+    # get randomly ordered cards
     # using sample instead of shuffle because shuffle shuffles in-place
     cards = random.sample(CARDS, len(CARDS))
     where_cards = {location: cards[i] for i, location in enumerate(locations)}
@@ -81,11 +84,14 @@ def main(stdscr):
     stdscr.refresh()
 
     while True:
+        # listen for event
         event = stdscr.getch()
         if event == ord('q'):
+            # exit the game
             break
 
         elif event == ord('i'):
+            # display the instructions
             new_win = curses.newwin(max_y, max_x)
             display_instructions(new_win)
 
@@ -98,6 +104,7 @@ def main(stdscr):
             stdscr.refresh()
 
         elif event == curses.KEY_MOUSE:
+            # process a click, and maybe a clicked card
             _, mx, my, _, _ = curses.getmouse()
             click_location = get_location_of_click(my, mx)
             if click_location not in possible_clicks:
@@ -110,6 +117,7 @@ def main(stdscr):
                 # clicked a card already flipped up
                 continue
 
+            # get which card was clicked and flip it
             clicked_card = where_cards[click_location]
             color_pair = SUITE_COLOR_PATTERN[clicked_card[0]]
             stdscr.addstr(click_location[0], click_location[1], clicked_card, curses.color_pair(color_pair))
@@ -121,6 +129,7 @@ def main(stdscr):
             stdscr.refresh()
 
         if clicked == 2:
+            # we've clicked on two cards, check if they're a match
             card1, card2 = clicked_cards
             color_match = SUITE_COLOR_PATTERN[card1[0]] == SUITE_COLOR_PATTERN[card2[0]]
             rank_match = card1[1:] == card2[1:]
@@ -151,6 +160,7 @@ def main(stdscr):
             flip_cards_back_and_forth(stdscr, locations, cards)
 
 def flip_cards_back_and_forth(stdscr, locations, cards, n_flips = 3, rows = ROWS, columns = COLUMNS):
+    # animation for the end of the game
     for i in range(n_flips):
         show_backs_of_cards(stdscr, locations, rows = rows, columns = columns)
         stdscr.refresh()
@@ -160,6 +170,7 @@ def flip_cards_back_and_forth(stdscr, locations, cards, n_flips = 3, rows = ROWS
         time.sleep(.5)
 
 def get_card_locations(rows = ROWS, columns = COLUMNS):
+    # initialize the locations of the cards
     locations = []
     for row in range(rows):
         for column in range(columns):
@@ -197,11 +208,14 @@ def update_stats_multiplayer(stdscr, flips, matches_per_player, next_turn, row =
         stdscr.addstr(row + i + 1, column+len(player_message), matches_message)
 
 def display_shortcuts(stdscr, row = None, column = 0):
+    # display the keyboard shortcuts
     if row is None:
         row = ROWS*2 + N_PLAYERS + 2
     stdscr.addstr(row, column, "(q)uit, (i)nstructions")
 
 def display_instructions(stdscr, row = 0, column = 0):
+    # display the instructions
+    # this is to be run in a seperate window
     stdscr.addstr(row, column, INSTRUCTIONS)
 
 
@@ -213,12 +227,14 @@ def get_location_of_click(x, y):
     return loc_x, loc_y
 
 def show_all_cards(stdscr, locations, rows = ROWS, columns = COLUMNS, cards = CARDS):
+    # show all of the cards face-forward
     for i, location in enumerate(locations):
         card = CARDS[i]
         color_pair = SUITE_COLOR_PATTERN[card[0]]
         stdscr.addstr(location[0], location[1], card, curses.color_pair(color_pair))
 
 def show_backs_of_cards(stdscr, locations, rows = ROWS, columns = COLUMNS):
+    # show just the backs of the cards
     for location in locations:
         stdscr.addstr(location[0], location[1], CARD_BACK, curses.color_pair(BACK_PAIR))
 
